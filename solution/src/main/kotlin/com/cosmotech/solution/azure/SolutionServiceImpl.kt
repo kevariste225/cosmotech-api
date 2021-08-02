@@ -12,6 +12,7 @@ import com.cosmotech.api.events.OrganizationRegistered
 import com.cosmotech.api.events.OrganizationUnregistered
 import com.cosmotech.api.exceptions.CsmAccessForbiddenException
 import com.cosmotech.api.exceptions.CsmResourceNotFoundException
+import com.cosmotech.api.events.SolutionRunTemplateChanged
 import com.cosmotech.api.utils.changed
 import com.cosmotech.api.utils.getCurrentAuthenticatedUserName
 import com.cosmotech.solution.api.SolutionApiService
@@ -219,6 +220,7 @@ class SolutionServiceImpl(
     }
 
     if (solution.runTemplates != null) {
+      this.handleSolutionRunTemplatesChange(solutionId, existingSolution.runTemplates, solution.runTemplates)
       existingSolution.runTemplates = solution.runTemplates
       hasChanged = true
     }
@@ -242,10 +244,14 @@ class SolutionServiceImpl(
       throw CsmResourceNotFoundException("Run Template '$runTemplateId' *not* found")
     }
     var hasChanged = false
+    var hasNameChanged = false
+    val changedNames:MutableList<String> = mutableListOf()
     for (existingRunTemplate in runTemplates) {
       if (runTemplate.name != null && runTemplate.changed(existingRunTemplate) { name }) {
         existingRunTemplate.name = runTemplate.name
+        hasNameChanged = true
         hasChanged = true
+        changedNames.add(existingRunTemplate.name)
       }
       if (runTemplate.description != null &&
           runTemplate.changed(existingRunTemplate) { description }) {
@@ -343,8 +349,37 @@ class SolutionServiceImpl(
     if (hasChanged) {
       existingSolution.runTemplates = runTemplates
       cosmosTemplate.upsert("${organizationId}_solutions", existingSolution)
+      if (hasNameChanged) {
+        this.publishRunTemplatesChanges(solutionId, runTemplateId, changedNames)
+      }
     }
     return runTemplates
+  }
+
+  fun handleSolutionRunTemplatesChange(solutionId: String, existingRunTemplates: List<RunTemplate>, newRunTemplates: List<RunTemplate>) {
+    // Index runTemplateId: runTemplateName for existing run templates
+    val existingNamesMap: MutableMap<String, String> = mutableMapOf()
+    for (runTemplate in existingRunTemplates) {
+      existingNamesMap[runTemplate.id] = runTemplate.name
+    }
+
+    for (runTemplate in newRunTemplates) {
+      val existingName = existingNamesMap.getOrDefault(runTemplate.id, null)
+      if (existingName != null && existingName != runTemplate.name) {
+      }
+    }
+
+  }
+
+  fun publishRunTemplatesChanges(solutionId: String, runTemplateId: String, newName: String) {
+    this.eventPublisher.publishEvent(
+        SolutionRunTemplateChanged(
+            this,
+            solutionId,
+            runTemplateId,
+            newName
+          )
+        )
   }
 
   @EventListener(OrganizationRegistered::class)

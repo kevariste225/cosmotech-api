@@ -92,3 +92,10 @@ class ScenarioDatasetListChanged(
     val scenarioId: String,
     val datasetList: List<String>?
 ) : CsmEvent(publisher)
+
+class SolutionRunTemplateChanged(
+    publisher: Any,
+    val solutionId: String,
+    val runTemplateId: String,
+    val runTemplateName: String
+): CsmEvent(publisher)
