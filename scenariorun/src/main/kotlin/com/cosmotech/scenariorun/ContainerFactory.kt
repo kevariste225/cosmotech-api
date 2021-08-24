@@ -23,6 +23,7 @@ import com.cosmotech.solution.utils.getCloudPath
 import com.cosmotech.workspace.api.WorkspaceApiService
 import com.cosmotech.workspace.domain.Workspace
 import java.util.UUID
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 private const val PARAMETERS_WORKSPACE_FILE = "%WORKSPACE_FILE%"
@@ -96,6 +97,8 @@ internal class ContainerFactory(
     private val connectorService: ConnectorApiService,
     private val datasetService: DatasetApiService
 ) {
+
+  private val logger = LoggerFactory.getLogger(ContainerFactory::class.java)
 
   private val steps: Map<String, SolutionContainerStepSpec>
 
@@ -715,6 +718,23 @@ internal class ContainerFactory(
     val envVars = getCommonEnvVars(csmSimulationId, organization.id ?: "", workspace.key)
     envVars[RUN_TEMPLATE_ID_VAR] = runTemplateId
     envVars[CONTAINER_MODE_VAR] = step.mode
+    if ("engine".equals(step.mode, ignoreCase = true)) {
+      if (csmPlatformProperties.azure?.credentials?.customer?.tenantId != null) {
+        // Special case for the engine mode.
+        // In the context of a managed app deployed in the customer tenant, the AMQP Consumer
+        // gets rejected because the JWT Token issuer is the core Platform Tenant.
+        // Fixing this requires passing the customer tenant ID instead, which requires
+        // the customer to consent to the core App Registration (magic Enterprise Application link).
+        // And this might be incompatible with the 'stack steps' feature, because the 'engine'
+        // step needs a dedicated tenant ID environment variable.
+        envVars[AZURE_TENANT_ID_VAR] =
+            csmPlatformProperties.azure?.credentials?.customer?.tenantId!!
+      } else {
+        logger.warn(
+            "Running the 'engine' step mode, but did not found the customer tenant ID" +
+                " in the configuration. Defaulting to the core Platform Tenant ID instead.")
+      }
+    }
     envVars[EVENT_HUB_CONTROL_PLANE_VAR] =
         "${csmPlatformProperties.azure?.eventBus?.baseUri}/${organization.id}-${workspace.key}${CONTROL_PLANE_SUFFIX}".lowercase()
     envVars[EVENT_HUB_MEASURES_VAR] =
