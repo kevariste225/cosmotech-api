@@ -174,6 +174,8 @@ subprojects {
     implementation("org.springframework.security:spring-security-oauth2-jose:5.5.2")
     implementation("org.springframework.security:spring-security-oauth2-resource-server:5.5.2")
     //    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("com.microsoft.graph:microsoft-graph:5.2.0")
+    implementation("com.azure:azure-identity:1.2.5")
 
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:1.12.0")

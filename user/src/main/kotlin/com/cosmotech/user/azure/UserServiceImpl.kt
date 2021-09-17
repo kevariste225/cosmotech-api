@@ -3,26 +3,29 @@
 package com.cosmotech.user.azure
 
 import com.azure.cosmos.models.CosmosContainerProperties
+import com.azure.identity.ClientSecretCredential
+import com.azure.identity.ClientSecretCredentialBuilder
+import com.microsoft.graph.authentication.TokenCredentialAuthProvider
+import com.microsoft.graph.requests.GraphServiceClient
 import com.cosmotech.api.azure.AbstractCosmosBackedService
 import com.cosmotech.api.azure.findAll
-import com.cosmotech.api.azure.findByIdOrThrow
+import com.cosmotech.api.utils.changed
+import com.cosmotech.api.events.UserRegistered
+import com.cosmotech.api.events.UserUnregistered
 import com.cosmotech.api.events.OrganizationRegistered
 import com.cosmotech.api.events.OrganizationUnregistered
 import com.cosmotech.api.events.UserAddedToOrganization
-import com.cosmotech.api.events.UserRegistered
 import com.cosmotech.api.events.UserRemovedFromOrganization
-import com.cosmotech.api.events.UserUnregistered
-import com.cosmotech.api.utils.changed
 import com.cosmotech.user.api.UserApiService
 import com.cosmotech.user.domain.User
 import com.cosmotech.user.domain.UserOrganization
-import java.lang.IllegalStateException
-import javax.annotation.PostConstruct
+import okhttp3.Request
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import javax.annotation.PostConstruct
 
 @Service
 @ConditionalOnProperty(name = ["csm.platform.vendor"], havingValue = "azure", matchIfMissing = true)
@@ -44,8 +47,30 @@ internal class UserServiceImpl : AbstractCosmosBackedService(), UserApiService {
 
   override fun findAllUsers() = cosmosTemplate.findAll<User>(coreUserContainer)
 
-  override fun findUserById(userId: String): User =
-      cosmosTemplate.findByIdOrThrow(coreUserContainer, userId)
+  override fun findUserById(userId: String): User {
+    // cosmosTemplate.findByIdOrThrow(coreUserContainer, userId)
+    val clientId = "f6fbd519-9a53-4c6b-aabb-4919bb2d11be"
+    val clientSecret = "7Xc7Q~x4HSounXApnF8B2qiIgZseQy4XHG-.G"
+    val tenant = "e413b834-8be8-4822-a370-be619545cb49"
+    val scopes = mutableListOf("https://graph.microsoft.com/.default")
+    val clientSecretCredential: ClientSecretCredential = ClientSecretCredentialBuilder()
+            .clientId(clientId)
+            .clientSecret(clientSecret)
+            .tenantId(tenant)
+            .build()
+
+    val tokenCredentialAuthProvider = TokenCredentialAuthProvider(scopes, clientSecretCredential)
+
+    val graphClient: GraphServiceClient<Request> = GraphServiceClient
+            .builder()
+            .authenticationProvider(tokenCredentialAuthProvider)
+            .buildClient()
+
+    // var vcrId = "3a869905-e9f5-4851-a7a9-3079aad49dff"
+    var vcrMail = "vincent.carluer@cosmotech.com"
+    val msUser = graphClient.users(vcrMail).buildRequest().get()
+    return User(id=msUser?.id, name=msUser?.displayName)
+  }
 
   override fun getCurrentUser(): User {
     val principal = SecurityContextHolder.getContext().authentication

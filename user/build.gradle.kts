@@ -1,7 +1,11 @@
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 import org.openapitools.generator.gradle.plugin.tasks.ValidateTask
 
-dependencies { api(projects.cosmotechApiCommon) }
+dependencies {
+  implementation("com.microsoft.graph:microsoft-graph:5.2.0")
+  implementation("com.azure:azure-identity:1.2.5")
+  api(projects.cosmotechApiCommon)
+}
 
 sourceSets {
   main { java.srcDirs("$buildDir/generated-sources/openapi/src/main/kotlin") }
