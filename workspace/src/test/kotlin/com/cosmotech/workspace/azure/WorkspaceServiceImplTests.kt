@@ -12,6 +12,7 @@ import com.cosmotech.organization.api.OrganizationApiService
 import com.cosmotech.solution.api.SolutionApiService
 import com.cosmotech.user.api.UserApiService
 import com.cosmotech.workspace.domain.Workspace
+import com.cosmotech.workspace.domain.WorkspaceUpsert
 import com.cosmotech.workspace.domain.WorkspaceSolution
 import io.mockk.MockKAnnotations
 import io.mockk.confirmVerified
@@ -260,7 +261,7 @@ class WorkspaceServiceImplTests {
     assertThrows<CsmResourceNotFoundException> {
       workspaceServiceImpl.createWorkspace(
           ORGANIZATION_ID,
-          Workspace(
+          WorkspaceUpsert(
               key = "my-workspace-key",
               name = "my workspace name",
               solution = WorkspaceSolution(solutionId = "SOL-my-solution-id")))
@@ -285,7 +286,7 @@ class WorkspaceServiceImplTests {
       workspaceServiceImpl.updateWorkspace(
           ORGANIZATION_ID,
           WORKSPACE_ID,
-          Workspace(
+          WorkspaceUpsert(
               key = "my-workspace-key-renamed",
               name = "my workspace name (renamed)",
               solution = WorkspaceSolution(solutionId = "SOL-my-new-solution-id")))

@@ -388,7 +388,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/WorkspaceUserAdd'
+                $ref: '#/components/schemas/WorkspaceUserUpsert'
             examples:
               TwoWorkspaceUsersToAddOrReplace:
                 $ref: '#/components/examples/TwoWorkspaceUsersAdd'
@@ -533,13 +533,16 @@ components:
           description: the list of tags
           items:
             type: string
+        ownerId:
+          type: string
+          description: the user id which will own this workspace
         solution:
           $ref: '#/components/schemas/WorkspaceSolution'
         users:
           type: array
           description: the list of users Id with their role to create
           items:
-            $ref: '#/components/schemas/WorkspaceUserAdd'
+            $ref: '#/components/schemas/WorkspaceUserUpsert'
         webApp:
           $ref: '#/components/schemas/WorkspaceWebApp'
         sendInputToDataWarehouse:
@@ -559,8 +562,11 @@ components:
         role:
           type: string
           description: the User role
-          enum: ["Admin","User","Viewer"]
-    WorkspaceUserAdd:
+          enum:
+          - Admin
+          - User
+          - Viewer
+    WorkspaceUserUpsert:
       type: object
       description: a Workspace user with role to add
       properties:
@@ -573,8 +579,10 @@ components:
         iamContext:
           type: string
           description: "the IAM security context to read and validate user informations: Core, Customer,Custom. Core: use the platform core credentials - Customer: use the platform customer credentials - Custom: provides your own IAM credentials"
-          default: "Core"
-          enum: ["Core,Customer,Custom"]
+          enum: 
+          - Core
+          - Customer
+          - Custom
         customTenantId:
           type: string
           description: the custom tenant Id managing the user
@@ -587,8 +595,10 @@ components:
         role:
           type: string
           description: the User role
-          default: "User"
-          enum: ["Admin","User","Viewer"]
+          enum:
+          - Admin
+          - User
+          - Viewer
     WorkspaceFile:
       type: object
       description: a Workspace File resource
@@ -652,7 +662,7 @@ components:
           - id: "3a869905-e9f5-4851-a7a9-3079aad49dff"
             role: Admin
           - upn: alice@cosmotech.com
-            iamContext: Core
+            iamContext: "Core"
             role: User
         webApp:
           url: https://brewery.app.cosmotech.com
@@ -775,5 +785,5 @@ components:
         - id: "3a869905-e9f5-4851-a7a9-3079aad49dff"
           role: Admin
         - upn: alice@cosmotech.com
-          iamContext: Core
+          iamContext: "Core"
           role: User

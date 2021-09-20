@@ -144,7 +144,9 @@ Class | Method | HTTP request | Description
  - [Workspace](./Models/Workspace.md)
  - [WorkspaceFile](./Models/WorkspaceFile.md)
  - [WorkspaceSolution](./Models/WorkspaceSolution.md)
+ - [WorkspaceUpsert](./Models/WorkspaceUpsert.md)
  - [WorkspaceUser](./Models/WorkspaceUser.md)
+ - [WorkspaceUserUpsert](./Models/WorkspaceUserUpsert.md)
  - [WorkspaceWebApp](./Models/WorkspaceWebApp.md)
 
 

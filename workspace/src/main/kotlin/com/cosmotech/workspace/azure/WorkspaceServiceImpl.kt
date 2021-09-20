@@ -18,17 +18,21 @@ import com.cosmotech.api.events.UserAddedToWorkspace
 import com.cosmotech.api.events.UserRemovedFromOrganization
 import com.cosmotech.api.events.UserRemovedFromWorkspace
 import com.cosmotech.api.exceptions.CsmAccessForbiddenException
+import com.cosmotech.api.exceptions.CsmClientException
+import com.cosmotech.api.exceptions.CsmResourceNotFoundException
 import com.cosmotech.api.utils.changed
 import com.cosmotech.api.utils.compareToAndMutateIfNeeded
 import com.cosmotech.api.utils.getCurrentAuthenticatedUserName
 import com.cosmotech.organization.api.OrganizationApiService
 import com.cosmotech.solution.api.SolutionApiService
 import com.cosmotech.user.api.UserApiService
-import com.cosmotech.user.domain.User
 import com.cosmotech.workspace.api.WorkspaceApiService
 import com.cosmotech.workspace.domain.Workspace
+import com.cosmotech.workspace.domain.WorkspaceUpsert
 import com.cosmotech.workspace.domain.WorkspaceFile
 import com.cosmotech.workspace.domain.WorkspaceUser
+import com.cosmotech.workspace.domain.WorkspaceUserUpsert
+import com.cosmotech.workspace.domain.WorkspaceSolution
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -50,8 +54,10 @@ internal class WorkspaceServiceImpl(
     private val azureStorageBlobBatchClient: BlobBatchClient,
 ) : AbstractCosmosBackedService(), WorkspaceApiService {
 
-  private fun fetchUsers(userIds: Collection<String>): Map<String, User> =
-      userIds.toSet().map { userService.findUserById(it) }.associateBy { it.id!! }
+  private fun fetchUsers(users: List<WorkspaceUserUpsert>): Map<String, WorkspaceUser> {
+      // userIds.toSet().map { userService.findUserById(it) }.associateBy { it.id!! }
+      return mapOf()
+    }
 
   override fun findAllWorkspaces(organizationId: String) =
       cosmosTemplate.findAll<Workspace>("${organizationId}_workspaces")
@@ -93,17 +99,25 @@ internal class WorkspaceServiceImpl(
     }
   }
 
-  override fun addOrReplaceUsersInOrganizationWorkspace(organizationId: kotlin.String, workspaceId: kotlin.String, workspaceUserAdd: kotlin.collections.List<WorkspaceUserAdd>): List<WorkspaceUser> {
-    if (workspaceUserAdd.isEmpty()) {
-      // Nothing to do
-      return workspaceUser
+  override fun addOrReplaceUsersInOrganizationWorkspace(
+      organizationId: kotlin.String,
+      workspaceId: kotlin.String,
+      workspaceUserUpsert: kotlin.collections.List<WorkspaceUserUpsert>
+  ): List<WorkspaceUser> {
+    if (workspaceUserUpsert.isEmpty()) {
+      throw CsmClientException("User list is empty")
     }
 
+    workspaceUserUpsert.forEach { newWorkspaceUser -> 
+        if (newWorkspaceUser.id == null && newWorkspaceUser.upn == null) {
+          throw CsmClientException("One of the properties 'id' or 'upn' must be provided")
+        }
+    }
+/*
     val organization = organizationService.findOrganizationById(organizationId)
     val workspace = findWorkspaceById(organizationId, workspaceId)
 
-    val workspaceUserWithoutNullIds = workspaceUser.filter { it.id != null }
-    val newUsersLoaded = fetchUsers(workspaceUserWithoutNullIds.mapNotNull { it.id })
+    val newUsersLoaded = fetchUsers(workspaceUserAdd)
     val workspaceUserWithRightNames =
         workspaceUserWithoutNullIds.map { it.copy(name = newUsersLoaded[it.id]!!.name!!) }
     val workspaceUserMap = workspaceUserWithRightNames.associateBy { it.id!! }
@@ -127,16 +141,22 @@ internal class WorkspaceServiceImpl(
               this, organizationId, user.id!!, user.roles.map { role -> role.value }))
     }
     return workspaceUserWithRightNames
+    */
+    return listOf()
   }
 
-  override fun createWorkspace(organizationId: String, workspace: Workspace): Workspace {
+  override fun createWorkspace(organizationId: String, workspaceUpsert: WorkspaceUpsert): Workspace {
     // Validate Solution ID
-    workspace.solution.solutionId?.let { solutionService.findSolutionById(organizationId, it) }
+    workspaceUpsert.solution.solutionId?.let { solutionService.findSolutionById(organizationId, it) }
+    /*
     return cosmosTemplate.insert(
         "${organizationId}_workspaces",
-        workspace.copy(
-            id = idGenerator.generate("workspace"), ownerId = getCurrentAuthenticatedUserName()))
+        workspaceUpsert.copy(
+            id = idGenerator.generate("workspace"), ownerId = getCurrentAuthenticatedUserName()),
+            users = listOf())
         ?: throw IllegalArgumentException("No Workspace returned in response: $workspace")
+        */
+      return Workspace(key = "toto", name = "toto", solution = WorkspaceSolution(solutionId = "toto"))
   }
 
   override fun deleteAllWorkspaceFiles(organizationId: String, workspaceId: String) {
@@ -166,27 +186,27 @@ internal class WorkspaceServiceImpl(
   override fun updateWorkspace(
       organizationId: String,
       workspaceId: String,
-      workspace: Workspace
+      workspaceUpsert: WorkspaceUpsert
   ): Workspace {
     val existingWorkspace = findWorkspaceById(organizationId, workspaceId)
-
-    var hasChanged =
+    var hasChanged = false
+    /*var hasChanged =
         existingWorkspace
             .compareToAndMutateIfNeeded(
-                workspace, excludedFields = arrayOf("ownerId", "users", "solution"))
+                workspaceUpsert, excludedFields = arrayOf("ownerId", "users", "solution"))
             .isNotEmpty()
-
-    if (workspace.ownerId != null && workspace.changed(existingWorkspace) { ownerId }) {
+*/
+    if (workspaceUpsert.ownerId != null && workspaceUpsert.changed(existingWorkspace) { ownerId }) {
       // Allow to change the ownerId as well, but only the owner can transfer the ownership
       if (existingWorkspace.ownerId != getCurrentAuthenticatedUserName()) {
         // TODO Only the owner or an admin should be able to perform this operation
         throw CsmAccessForbiddenException(
             "You are not allowed to change the ownership of this Resource")
       }
-      existingWorkspace.ownerId = workspace.ownerId
+      existingWorkspace.ownerId = workspaceUpsert.ownerId
       hasChanged = true
     }
-
+/*
     var userIdsRemoved: List<String>? = listOf()
     if (workspace.users != null) {
       // Specifying a list of users here overrides the previous list
@@ -198,14 +218,15 @@ internal class WorkspaceServiceImpl(
       existingWorkspace.users = usersWithNames
       hasChanged = true
     }
-
-    if (workspace.solution != null) {
+*/
+    if (workspaceUpsert.solution != null) {
       // Validate solution ID
-      workspace.solution.solutionId?.let { solutionService.findSolutionById(organizationId, it) }
-      existingWorkspace.solution = workspace.solution
+      workspaceUpsert.solution.solutionId?.let { solutionService.findSolutionById(organizationId, it) }
+      existingWorkspace.solution = workspaceUpsert.solution
       hasChanged = true
     }
 
+          /*
     return if (hasChanged) {
       val responseEntity =
           cosmosTemplate.upsertAndReturnEntity("${organizationId}_workspaces", existingWorkspace)
@@ -219,8 +240,9 @@ internal class WorkspaceServiceImpl(
       }
       responseEntity
     } else {
-      existingWorkspace
-    }
+      */
+    return  existingWorkspace
+    // }
   }
 
   override fun deleteWorkspace(organizationId: String, workspaceId: String): Workspace {
@@ -246,7 +268,7 @@ internal class WorkspaceServiceImpl(
         fileName)
     azureStorageBlobServiceClient
         .getBlobContainerClient(organizationId.sanitizeForAzureStorage())
-        .getBlobClient("${workspaceId.sanitizeForAzureStorage()}/${fileName}")
+        .getBlobClient("${workspaceId.sanitizeForAzureStorage()}/$fileName")
         .delete()
   }
 

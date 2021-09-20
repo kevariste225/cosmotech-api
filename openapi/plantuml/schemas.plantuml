@@ -379,10 +379,32 @@ entity WorkspaceSolution {
     defaultRunTemplateDataset: Map
 }
 
+entity WorkspaceUpsert { 
+    * key: String
+    * name: String
+    description: String
+    version: String
+    tags: List<String>
+    ownerId: String
+    * solution: WorkspaceSolution
+    users: List<WorkspaceUserUpsert>
+    webApp: WorkspaceWebApp
+    sendInputToDataWarehouse: Boolean
+}
+
 entity WorkspaceUser { 
-    * id: String
-    name: String
-    * roles: List<String>
+    id: String
+    role: String
+}
+
+entity WorkspaceUserUpsert { 
+    id: String
+    upn: String
+    iamContext: String
+    customTenantId: String
+    customClientId: String
+    customClientSecret: String
+    role: String
 }
 
 entity WorkspaceWebApp { 
@@ -409,6 +431,9 @@ OrganizationServices -- OrganizationService : solutionsContainerRegistry
 Scenario -- "0..*" ScenarioUser : users
 Scenario -- "0..*" ScenarioRunTemplateParameterValue : parametersValues
 Scenario -- ScenarioLastRun : lastRun
+WorkspaceUpsert -- WorkspaceSolution : solution
+WorkspaceUpsert -- "0..*" WorkspaceUserUpsert : users
+WorkspaceUpsert -- WorkspaceWebApp : webApp
 ScenarioRun -- "0..*" RunTemplateParameterValue : parametersValues
 ScenarioRun -- "0..*" ScenarioRunContainer : containers
 ScenarioRunStatus -- "0..*" ScenarioRunStatusNode : nodes

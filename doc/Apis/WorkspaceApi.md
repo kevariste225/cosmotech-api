@@ -21,7 +21,7 @@ Method | HTTP request | Description
 
 <a name="addOrReplaceUsersInOrganizationWorkspace"></a>
 # **addOrReplaceUsersInOrganizationWorkspace**
-> List addOrReplaceUsersInOrganizationWorkspace(organization\_id, workspace\_id, WorkspaceUser)
+> List addOrReplaceUsersInOrganizationWorkspace(organization\_id, workspace\_id, WorkspaceUserUpsert)
 
 Add (or replace) users to the Workspace specified
 
@@ -31,7 +31,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **organization\_id** | **String**| the Organization identifier | [default to null]
  **workspace\_id** | **String**| the Workspace identifier | [default to null]
- **WorkspaceUser** | [**List**](../Models/WorkspaceUser.md)| the Users to add. Any User with the same ID is overwritten |
+ **WorkspaceUserUpsert** | [**List**](../Models/WorkspaceUserUpsert.md)| the Users to add. Any User with the same ID is overwritten |
 
 ### Return type
 
@@ -48,7 +48,7 @@ Name | Type | Description  | Notes
 
 <a name="createWorkspace"></a>
 # **createWorkspace**
-> Workspace createWorkspace(organization\_id, Workspace)
+> Workspace createWorkspace(organization\_id, WorkspaceUpsert)
 
 Create a new workspace
 
@@ -57,7 +57,7 @@ Create a new workspace
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **organization\_id** | **String**| the Organization identifier | [default to null]
- **Workspace** | [**Workspace**](../Models/Workspace.md)| the Workspace to create |
+ **WorkspaceUpsert** | [**WorkspaceUpsert**](../Models/WorkspaceUpsert.md)| the Workspace to create |
 
 ### Return type
 
@@ -310,7 +310,7 @@ null (empty response body)
 
 <a name="updateWorkspace"></a>
 # **updateWorkspace**
-> Workspace updateWorkspace(organization\_id, workspace\_id, Workspace)
+> Workspace updateWorkspace(organization\_id, workspace\_id, WorkspaceUpsert)
 
 Update a workspace
 
@@ -320,7 +320,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **organization\_id** | **String**| the Organization identifier | [default to null]
  **workspace\_id** | **String**| the Workspace identifier | [default to null]
- **Workspace** | [**Workspace**](../Models/Workspace.md)| the new Workspace details. |
+ **WorkspaceUpsert** | [**WorkspaceUpsert**](../Models/WorkspaceUpsert.md)| the new Workspace details. |
 
 ### Return type
 
