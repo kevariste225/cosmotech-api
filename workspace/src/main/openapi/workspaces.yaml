@@ -574,7 +574,7 @@ components:
           type: string
           description: "the IAM security context to read and validate user informations: Core, Customer,Custom. Core: use the platform core credentials - Customer: use the platform customer credentials - Custom: provides your own IAM credentials"
           default: "Core"
-          enum: ["Core,Customer,Custom,Force"]
+          enum: ["Core,Customer,Custom"]
         customTenantId:
           type: string
           description: the custom tenant Id managing the user
