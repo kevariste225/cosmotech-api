@@ -36,7 +36,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Workspace'
+              $ref: '#/components/schemas/WorkspaceUpsert'
             examples:
               Workspace:
                 $ref: '#/components/examples/BreweryWorkspaceCreateIn'
@@ -59,6 +59,8 @@ paths:
                   $ref: '#/components/examples/BreweryWorkspace'
         "400":
           description: Bad request
+        "403":
+          description: Forbidden
     get:
       operationId: findAllWorkspaces
       tags:
@@ -76,6 +78,8 @@ paths:
               examples:
                 OneWorkspace:
                   $ref: '#/components/examples/OneWorkspace'
+        "403":
+          description: Forbidden
   /organizations/{organization_id}/workspaces/{workspace_id}:
     parameters:
       - name: organization_id
@@ -105,6 +109,8 @@ paths:
               examples:
                 Workspace:
                   $ref: '#/components/examples/BreweryWorkspace'
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace specified is unknown or you don't have access to it
     patch:
@@ -118,7 +124,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Workspace'
+              $ref: '#/components/schemas/WorkspaceUpsert'
             examples:
               BreweryUpdate:
                 $ref: '#/components/examples/BreweryWorkspaceUpdate'
@@ -141,6 +147,8 @@ paths:
                   $ref: '#/components/examples/BreweryWorkspaceUpdated'
         "400":
           description: Bad request
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace specified is unknown or you don't have access to it
     delete:
@@ -160,6 +168,8 @@ paths:
                   $ref: '#/components/examples/BreweryWorkspace'
         "400":
           description: Bad request
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace specified is unknown or you don't have access to it
 
@@ -244,6 +254,8 @@ paths:
                   $ref: '#/components/examples/BreweryWorkspaceFile'
         "400":
           description: Bad request
+        "403":
+          description: Forbidden
     get:
       operationId: findAllWorkspaceFiles
       tags:
@@ -261,6 +273,8 @@ paths:
               examples:
                 WorkspaceFiles:
                   $ref: '#/components/examples/WorkspaceFiles'
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace specified is unknown or you don't have access to it
     delete:
@@ -271,6 +285,8 @@ paths:
       responses:
         "204":
           description: Request succeeded
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace specified is unknown or you don't have access to them
 
@@ -307,6 +323,8 @@ paths:
               schema:
                 type: string
                 format: binary
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace file specified is unknown or you don't have access to it
 
@@ -338,6 +356,8 @@ paths:
       responses:
         "204":
           description: Request succeeded
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace or the file specified is unknown or you don't have access to them
 
@@ -368,10 +388,10 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/WorkspaceUser'
+                $ref: '#/components/schemas/WorkspaceUserAdd'
             examples:
               TwoWorkspaceUsersToAddOrReplace:
-                $ref: '#/components/examples/TwoWorkspaceUsers'
+                $ref: '#/components/examples/TwoWorkspaceUsersAdd'
       responses:
         "200":
           description: the Workspace Users
@@ -384,6 +404,10 @@ paths:
               examples:
                 TwoWorkspaceUsers:
                   $ref: '#/components/examples/TwoWorkspaceUsers'
+        "400":
+          description: Bad request
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace specified is unknown or you don't have access to it
     delete:
@@ -394,6 +418,8 @@ paths:
       responses:
         "204":
           description: the operation succeeded
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace specified is unknown or you don't have access to it
 
@@ -425,6 +451,8 @@ paths:
       responses:
         "204":
           description: Request succeeded
+        "403":
+          description: Forbidden
         "404":
           description: the Workspace or the User specified is unknown or you don't have access to them
 
@@ -484,26 +512,83 @@ components:
         - key
         - name
         - solution
+    WorkspaceUpsert:
+      type: object
+      description: a Workspace to upsert
+      properties:
+        key:
+          type: string
+          description: technical key for resource name convention and version grouping. Must be unique
+        name:
+          type: string
+          description: the Workspace name
+        description:
+          type: string
+          description: the Workspace description
+        version:
+          type: string
+          description: the Workspace version MAJOR.MINOR.PATCH.
+        tags:
+          type: array
+          description: the list of tags
+          items:
+            type: string
+        solution:
+          $ref: '#/components/schemas/WorkspaceSolution'
+        users:
+          type: array
+          description: the list of users Id with their role to create
+          items:
+            $ref: '#/components/schemas/WorkspaceUserAdd'
+        webApp:
+          $ref: '#/components/schemas/WorkspaceWebApp'
+        sendInputToDataWarehouse:
+          type: boolean
+          description: default setting for all Scenarios and Run Templates to set whether or not the Dataset values and the input parameters values are send to the DataWarehouse prior to the ScenarioRun
+      required:
+        - key
+        - name
+        - solution
     WorkspaceUser:
       type: object
-      description: a Workspace user with roles
+      description: a Workspace user with role
       properties:
         id:
           type: string
           description: the User id
-        name:
+        role:
           type: string
-          readOnly: true
-          description: the User name
-        roles:
-          type: array
-          description: the User roles
-          items:
-            type: string
-            enum: ["Admin","User","Viewer"]
-      required:
-        - id
-        - roles
+          description: the User role
+          enum: ["Admin","User","Viewer"]
+    WorkspaceUserAdd:
+      type: object
+      description: a Workspace user with role to add
+      properties:
+        id:
+          type: string
+          description: the User IAM id
+        upn:
+          type: string
+          description: the User IAM UPN
+        iamContext:
+          type: string
+          description: "the IAM security context to read and validate user informations: Core, Customer,Custom, Force. Core: use the platform core credentials - Customer: use the platform customer credentials - Custom: provides your own IAM credentials - Force: Write user id without any check"
+          default: "Core"
+          enum: ["Core,Customer,Custom,Force"]
+        customTenantId:
+          type: string
+          description: the custom tenant Id managing the user
+        customClientId:
+          type: string
+          description: the custom client Id to read the tenant for user informations
+        customClientSecret:
+          type: string
+          description: the custom client secret to read the tenant for user informations
+        role:
+          type: string
+          description: the User role
+          default: "User"
+          enum: ["Admin","User","Viewer"]
     WorkspaceFile:
       type: object
       description: a Workspace File resource
@@ -564,12 +649,11 @@ components:
           defaultRunTemplateDataset:
             1: "1"
         users:
-          - id: "1"
-            roles:
-              - Admin
-          - id: "2"
-            roles:
-              - Viewer
+          - id: "3a869905-e9f5-4851-a7a9-3079aad49dff"
+            role: Admin
+          - upn: alice@cosmotech.com
+            iamContext: Core
+            role: User
         webApp:
           url: https://brewery.app.cosmotech.com
           iframes:
@@ -594,14 +678,10 @@ components:
           defaultRunTemplateDataset:
             1: "1"
         users:
-          - id: "1"
-            name: Bob
-            roles:
-              - Admin
-          - id: "2"
-            name: Alice
-            roles:
-              - Viewer
+          - id: "3a869905-e9f5-4851-a7a9-3079aad49dff"
+            role: Admin
+          - id: "f9510936-8c18-4572-a628-63d437fb74de"
+            role: User
         webApp:
           url: https://brewery.app.cosmotech.com
           iframes:
@@ -626,14 +706,10 @@ components:
             defaultRunTemplateDataset:
               1: "1"
           users:
-            - id: "1"
-              name: Bob
-              roles:
-                - Admin
-            - id: "2"
-              name: Alice
-              roles:
-                - Viewer
+            - id: "3a869905-e9f5-4851-a7a9-3079aad49dff"
+              role: Admin
+            - id: "f9510936-8c18-4572-a628-63d437fb74de"
+              role: User
           webApp:
             url: https://brewery.app.cosmotech.com
             iframes:
@@ -663,14 +739,10 @@ components:
           defaultRunTemplateDataset:
             1: "1"
         users:
-          - id: "1"
-            name: Bob
-            roles:
-              - Admin
-          - id: "2"
-            name: Alice
-            roles:
-              - Viewer
+          - id: "3a869905-e9f5-4851-a7a9-3079aad49dff"
+            role: Admin
+          - id: "f9510936-8c18-4572-a628-63d437fb74de"
+            role: User
         webApp:
           url: https://brewery.app.cosmotech.com
           iframes:
@@ -692,21 +764,16 @@ components:
       summary: Two users of a Workspace
       description: Two Users of a Workspace example
       value:
-        - id: "1"
-          name: Bob
-          roles:
-            - Admin
-        - id: "2"
-          name: Alice
-          roles:
-            - User
-    TwoWorkspaceToAddOrReplace:
-      summary: Two users of a Workspace
-      description: Two Users of a Workspace example
+        - id: "3a869905-e9f5-4851-a7a9-3079aad49dff"
+          role: Admin
+        - id: "f9510936-8c18-4572-a628-63d437fb74de"
+          role: User
+    TwoWorkspaceUsersAdd:
+      summary: Two users to add to the Workspace
+      description: Two Users to add to the Workspace example
       value:
-        - id: "1"
-          roles:
-            - Admin
-        - id: "2"
-          roles:
-            - User
+        - id: "3a869905-e9f5-4851-a7a9-3079aad49dff"
+          role: Admin
+        - upn: alice@cosmotech.com
+          iamContext: Core
+          role: User
