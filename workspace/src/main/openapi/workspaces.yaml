@@ -572,7 +572,7 @@ components:
           description: the User IAM UPN
         iamContext:
           type: string
-          description: "the IAM security context to read and validate user informations: Core, Customer,Custom, Force. Core: use the platform core credentials - Customer: use the platform customer credentials - Custom: provides your own IAM credentials - Force: Write user id without any check"
+          description: "the IAM security context to read and validate user informations: Core, Customer,Custom. Core: use the platform core credentials - Customer: use the platform customer credentials - Custom: provides your own IAM credentials"
           default: "Core"
           enum: ["Core,Customer,Custom,Force"]
         customTenantId:

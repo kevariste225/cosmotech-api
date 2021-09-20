@@ -93,12 +93,8 @@ internal class WorkspaceServiceImpl(
     }
   }
 
-  override fun addOrReplaceUsersInOrganizationWorkspace(
-      organizationId: String,
-      workspaceId: String,
-      workspaceUser: List<WorkspaceUser>
-  ): List<WorkspaceUser> {
-    if (workspaceUser.isEmpty()) {
+  override fun addOrReplaceUsersInOrganizationWorkspace(organizationId: kotlin.String, workspaceId: kotlin.String, workspaceUserAdd: kotlin.collections.List<WorkspaceUserAdd>): List<WorkspaceUser> {
+    if (workspaceUserAdd.isEmpty()) {
       // Nothing to do
       return workspaceUser
     }
