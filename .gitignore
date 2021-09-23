@@ -57,3 +57,6 @@ api/kubernetes/helm-chart/values-vcr.yaml
 ### Helm ###
 # Chart dependencies
 **/charts/*.tgz
+
+# pivate env vars
+setenv.sh
