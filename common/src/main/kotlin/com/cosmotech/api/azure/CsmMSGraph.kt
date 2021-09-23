@@ -5,8 +5,8 @@ package com.cosmotech.api.azure
 import com.azure.identity.ClientSecretCredential
 import com.azure.identity.ClientSecretCredentialBuilder
 import com.microsoft.graph.authentication.TokenCredentialAuthProvider
-import com.microsoft.graph.requests.GraphServiceClient
 import com.microsoft.graph.models.User
+import com.microsoft.graph.requests.GraphServiceClient
 import okhttp3.Request
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -16,7 +16,11 @@ class CsmMSGraph {
   private val logger = LoggerFactory.getLogger(CsmMSGraph::class.java)
   private val MSGRAPH_SCOPE = "https://graph.microsoft.com/.default"
 
-  fun getClient(tenantId: String, clientId: String, clientSecret: String): GraphServiceClient<Request> {
+  fun getClient(
+      tenantId: String,
+      clientId: String,
+      clientSecret: String
+  ): GraphServiceClient<Request> {
     logger.debug("Creating ClientSecretCredential")
     val scopes = mutableListOf(MSGRAPH_SCOPE)
     val clientSecretCredential: ClientSecretCredential =

@@ -12,8 +12,8 @@ import com.cosmotech.organization.api.OrganizationApiService
 import com.cosmotech.solution.api.SolutionApiService
 import com.cosmotech.user.api.UserApiService
 import com.cosmotech.workspace.domain.Workspace
-import com.cosmotech.workspace.domain.WorkspaceUpsert
 import com.cosmotech.workspace.domain.WorkspaceSolution
+import com.cosmotech.workspace.domain.WorkspaceUpsert
 import io.mockk.MockKAnnotations
 import io.mockk.confirmVerified
 import io.mockk.every

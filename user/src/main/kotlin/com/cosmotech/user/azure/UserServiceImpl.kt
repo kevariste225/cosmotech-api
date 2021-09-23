@@ -14,6 +14,8 @@ import com.cosmotech.api.events.UserRegistered
 import com.cosmotech.api.events.UserRemovedFromOrganization
 import com.cosmotech.api.events.UserUnregistered
 import com.cosmotech.api.utils.changed
+import com.cosmotech.api.utils.getCurrentAuthenticatedUserName
+import com.cosmotech.api.utils.getCurrentAuthenticatedUserUPN
 import com.cosmotech.user.api.UserApiService
 import com.cosmotech.user.domain.User
 import com.cosmotech.user.domain.UserOrganization
@@ -48,6 +50,8 @@ internal class UserServiceImpl : AbstractCosmosBackedService(), UserApiService {
   override fun findAllUsers() = cosmosTemplate.findAll<User>(coreUserContainer)
 
   override fun findUserById(userId: String): User {
+    val upn = getCurrentAuthenticatedUserUPN()
+    getCurrentAuthenticatedUserName()
     // cosmosTemplate.findByIdOrThrow(coreUserContainer, userId)
     val clientId = "f6fbd519-9a53-4c6b-aabb-4919bb2d11be"
     val clientSecret = "7Xc7Q~x4HSounXApnF8B2qiIgZseQy4XHG-.G"
