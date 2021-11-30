@@ -10,9 +10,9 @@ import com.microsoft.azure.kusto.data.Client
 import com.microsoft.azure.kusto.data.ClientImpl
 import com.microsoft.azure.kusto.data.ClientRequestProperties
 import com.microsoft.azure.kusto.data.auth.ConnectionStringBuilder
-import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import java.time.temporal.Temporal
 import java.util.concurrent.TimeUnit
 import org.slf4j.LoggerFactory
 import org.springframework.boot.actuate.health.Health
@@ -72,7 +72,7 @@ class AzureDataExplorerClient(
         scenarioRunWorkflowEndTime?.until(ZonedDateTime.now(), ChronoUnit.SECONDS)
             ?: return DataIngestionState.Unknown
 
-    if (seconds < waitingTimeBeforeIngestion) {
+    if (seconds <= waitingTimeBeforeIngestion) {
       return DataIngestionState.InProgress
     }
 
@@ -110,7 +110,7 @@ class AzureDataExplorerClient(
         DataIngestionState.Successful
       }
     } else if (probesMeasuresCount < sentMessagesTotal) {
-      if (doesProbesMeasuresTableContainIngestionFailures(organizationId, workspaceKey)) {
+      if (anyDataPlaneIngestionFailures(organizationId, workspaceKey, scenarioRunWorkflowEndTime)) {
         DataIngestionState.Failure
       } else {
         DataIngestionState.InProgress
@@ -205,9 +205,10 @@ class AzureDataExplorerClient(
     return healthBuilder.withDetail("baseUri", baseUri).build()
   }
 
-  internal fun doesProbesMeasuresTableContainIngestionFailures(
+  internal fun <T : Temporal> anyDataPlaneIngestionFailures(
       organizationId: String,
       workspaceKey: String,
+      scenarioRunWorkflowEndTime: T,
   ): Boolean {
     val databaseName = getDatabaseName(organizationId, workspaceKey)
     val failureQueryPrimaryResults =
@@ -223,14 +224,14 @@ class AzureDataExplorerClient(
                   timeoutInMilliSec = TimeUnit.SECONDS.toMillis(REQUEST_TIMEOUT_SECONDS)
                 })
             .primaryResults
-    if (failureQueryPrimaryResults.next()) {
-      val count = failureQueryPrimaryResults.count()
-      val failedOn = failureQueryPrimaryResults.getKustoDateTime("FailedOn")!!
-      val now = LocalDateTime.now()
-      val minutes = failedOn.until(now, ChronoUnit.MINUTES)
-      return count > 0 && minutes < this.ingestionObservationWindowToBeConsideredAFailureMinutes
+    return if (failureQueryPrimaryResults.next()) {
+      failureQueryPrimaryResults.count() > 0 &&
+          failureQueryPrimaryResults.getKustoDateTime("FailedOn")!!.until(
+              scenarioRunWorkflowEndTime, ChronoUnit.MINUTES) <
+              this.ingestionObservationWindowToBeConsideredAFailureMinutes
+    } else {
+      false
     }
-    return false
   }
 
   private fun queryScenarioRunWorkflowEndTime(

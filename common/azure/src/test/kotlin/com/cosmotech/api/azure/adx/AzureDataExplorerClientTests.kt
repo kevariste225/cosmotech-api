@@ -173,9 +173,10 @@ class AzureDataExplorerClientTests {
 
   @Test
   fun `PROD-7420 - getStateFor returns Failure if not enough data ingested and there are ingestion failures`() {
+    val scenarioRunWorkflowEndTime = ZonedDateTime.now().minusSeconds(10)
     every { eventPublisher.publishEvent(any<ScenarioRunEndTimeRequest>()) } answers
         {
-          firstArg<ScenarioRunEndTimeRequest>().response = ZonedDateTime.now().minusSeconds(10)
+          firstArg<ScenarioRunEndTimeRequest>().response = scenarioRunWorkflowEndTime
         }
     every { csmPlatformProperties.dataIngestion } returns
         CsmPlatformProperties.DataIngestion(
@@ -192,8 +193,11 @@ class AzureDataExplorerClientTests {
           eq("my-organization-id"), eq("my-workspace-key"), eq("my-csm-simulation-run"))
     } returns 33
     every {
-      azureDataExplorerClient.doesProbesMeasuresTableContainIngestionFailures(
-          eq("my-organization-id"), eq("my-workspace-key"))
+      azureDataExplorerClient.anyDataPlaneIngestionFailures(
+          eq("my-organization-id"),
+          eq("my-workspace-key"),
+          eq(scenarioRunWorkflowEndTime),
+      )
     } returns true
 
     assertEquals(
@@ -207,9 +211,10 @@ class AzureDataExplorerClientTests {
 
   @Test
   fun `PROD-7420 - getStateFor returns InProgress if not enough data ingested and no ingestion failures`() {
+    val scenarioRunWorkflowEndTime = ZonedDateTime.now().minusSeconds(10)
     every { eventPublisher.publishEvent(any<ScenarioRunEndTimeRequest>()) } answers
         {
-          firstArg<ScenarioRunEndTimeRequest>().response = ZonedDateTime.now().minusSeconds(10)
+          firstArg<ScenarioRunEndTimeRequest>().response = scenarioRunWorkflowEndTime
         }
     every { csmPlatformProperties.dataIngestion } returns
         CsmPlatformProperties.DataIngestion(
@@ -226,8 +231,11 @@ class AzureDataExplorerClientTests {
           eq("my-organization-id"), eq("my-workspace-key"), eq("my-csm-simulation-run"))
     } returns 33
     every {
-      azureDataExplorerClient.doesProbesMeasuresTableContainIngestionFailures(
-          eq("my-organization-id"), eq("my-workspace-key"))
+      azureDataExplorerClient.anyDataPlaneIngestionFailures(
+          eq("my-organization-id"),
+          eq("my-workspace-key"),
+          eq(scenarioRunWorkflowEndTime),
+      )
     } returns false
 
     assertEquals(
