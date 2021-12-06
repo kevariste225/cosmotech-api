@@ -149,7 +149,7 @@ data class CsmPlatformProperties(
       val containerRegistries: CsmPlatformAzureContainerRegistries,
       val eventBus: CsmPlatformAzureEventBus,
       val dataWarehouseCluster: CsmPlatformAzureDataWarehouseCluster,
-      val keyVault: String,
+      val keyVault: CsmPlatformAzureVault,
       val analytics: CsmPlatformAzureAnalytics,
       /** Azure Cosmos DB */
       val cosmos: CsmPlatformAzureCosmos,
@@ -254,6 +254,11 @@ data class CsmPlatformProperties(
     data class CsmPlatformAzureDataWarehouseCluster(val baseUri: String, val options: Options) {
       data class Options(val ingestionUri: String)
     }
+
+    data class CsmPlatformAzureVault(
+        /** Azure Vault URI */
+        val uri: String
+    )
 
     data class CsmPlatformAzureAnalytics(
         val resourceUri: String,

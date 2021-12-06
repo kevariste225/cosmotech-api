@@ -139,6 +139,8 @@ csm:
         options:
           ingestionUri: ""
       keyVault:
+        vault-name: "[vault-name]"
+        uri: "https://${csm.platform.azure.keyVault.vault-name}.vault.azure.net/"
       analytics:
         resourceUri: ""
         instrumentationKey: ""

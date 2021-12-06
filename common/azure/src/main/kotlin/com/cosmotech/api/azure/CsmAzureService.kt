@@ -4,6 +4,7 @@ package com.cosmotech.api.azure
 
 import com.azure.cosmos.CosmosClient
 import com.azure.cosmos.CosmosDatabase
+import com.azure.security.keyvault.secrets.SecretClient
 import com.azure.spring.data.cosmos.core.CosmosTemplate
 import com.cosmotech.api.CsmPhoenixService
 import javax.annotation.PostConstruct
@@ -15,6 +16,8 @@ abstract class CsmAzureService : CsmPhoenixService() {
   @Autowired protected lateinit var cosmosTemplate: CosmosTemplate
 
   @Autowired protected lateinit var cosmosClient: CosmosClient
+
+  @Autowired protected lateinit var secretClient: SecretClient
 
   protected lateinit var cosmosCoreDatabase: CosmosDatabase
 
